@@ -1,0 +1,19 @@
+{
+  "name": "WordleVGC",
+  "description": "Competitive Wordle",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "./popup/popup.html",
+    "default_icon": "./images/WordleVGC_icon.png"
+  },
+  "content_scripts": [
+    {
+      "js": ["scripts/content.js"],
+      "css": ["scripts/content.css"],
+      "matches": [
+        "https://www.nytimes.com/games/wordle/index.html"
+      ]
+    }
+  ]
+}

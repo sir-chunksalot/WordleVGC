@@ -1,0 +1,23 @@
+.timer {
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: monospace;
+    font-variant-numeric: tabular-nums;
+}
+
+.text {
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 20px;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+@font-face {
+  font-family: "Franklin";
+  src: url("../fonts/FallingSkyBold-zemL.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
