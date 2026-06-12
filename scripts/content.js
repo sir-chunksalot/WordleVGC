@@ -1,8 +1,21 @@
 /* ---------- Run on page load ---------- */
+console.log("CONTENT LOADED", Date.now());
+
 function init() {
     console.log("init - WordleVGC");
+    console.log("INIT START", Date.now());
+
+    chrome.runtime.sendMessage(
+        { type: "test" },
+        (response) => {
+            console.log("RESPONSE", Date.now(), response);
+        }
+    );
+
+    console.log("AFTER SEND", Date.now());
     findWordle(); //uses an observer to keep checking for when the wordle div is populated
 }
+
 
 function findWordle() {
     console.log("timer");
@@ -15,7 +28,8 @@ function findWordle() {
 
     if (words_div) {
         console.log("Found div");
-        editPage(div);
+        observer.disconnect();
+        editPage(words_div);
     }
     else {
         console.log("div not found");
@@ -47,10 +61,15 @@ function editPage(div) {
     const firstChild = div.firstElementChild;
     div.insertBefore(wordle_vgc_div, firstChild.nextSibling);
 
-    startTimer(timer);
+    main(timer);
 }
 
-function startTimer(timer) {
+async function main(timerElement) {
+    const timerInterval = startTimer(timerElement);
+
+}
+
+function startTimer(timerElement) {
     const start = Date.now();
 
     const timerInterval = setInterval(() => {
@@ -65,13 +84,17 @@ function startTimer(timer) {
         const secStr = String(seconds).padStart(2, '0');
         const minStr = String(minutes).padStart(2, '0');
 
-        timer.innerHTML = `${minStr}:${secStr}:${msStr}`;
+        timerElement.innerHTML = `${minStr}:${secStr}:${msStr}`;
 
         if (minutes >= 59 && seconds >= 59 && miliseconds >= 99) { 
             clearInterval(timerInterval);
         }
     }, 10);
+
+    return timerInterval;
+
 }
 
+
 init();
-console.log(Object.getOwnPropertyNames(window));
+//console.log(Object.getOwnPropertyNames(window));
