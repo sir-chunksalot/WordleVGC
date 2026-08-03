@@ -5,7 +5,7 @@
   "manifest_version": 3,
   "action": {
     "default_popup": "./popup/popup.html",
-    "default_icon": "./images/WordleVGC_icon.png"
+    "default_icon": "./images/wordle_vgc.webp"
   },
   "content_scripts": [
     {
@@ -16,16 +16,21 @@
       ]
     }
   ],
-  "background": {
-    "service_worker": "scripts/background.js"
-  }
-  ,
+  "web_accessible_resources": [
+    {
+      "resources": ["scripts/inject.js"],
+      "matches": [
+        "https://www.nytimes.com/*"
+      ]
+    }
+  ],
   "externally_connectable": {
     "matches": ["*://*.nytimes.com/*"]
   },
   "permissions": [
     "scripting",
     "storage",
-    "activeTab"
+    "activeTab",
+    "storage"
   ]
 }
