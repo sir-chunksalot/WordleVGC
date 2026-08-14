@@ -1,6 +1,6 @@
 var wordle_answer = "";
-var timer_interval;
-var timer_started = false;
+var timerInterval;
+var timerStarted = false;
 var current_date;
 var completion_time;
 
@@ -9,11 +9,11 @@ function init() {
     //establish connection to background script
     console.log("init - WordleVGC");
 
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2,'0');
-    const day = String(date.getDate()).padStart(2,'0');
-    current_date = year+"-"+month+"-"+day;
+    const DATE = new Date();
+    const YEAR = DATE.getFullYear();
+    const MONTH = String(DATE.getMonth() + 1).padStart(2,'0');
+    const DAY = String(DATE.getDate()).padStart(2,'0');
+    current_date = YEAR+"-"+MONTH+"-"+DAY;
     console.log("date:",current_date);
 
     getWordleAnswer();
@@ -21,21 +21,26 @@ function init() {
 }
 
 function getCurrentGuess() {
-    const rows = document.querySelectorAll(".Row-module_row__pwpBq");
+    const ROWS = document.querySelectorAll(".Row-module_row__pwpBq");
 
-    for (const row of [...rows].reverse()) {
-        const tiles = row.querySelectorAll(".Tile-module_tile__UWEHN");
+    for (const ROW of [...ROWS].reverse()) {
+        const TILES = ROW.querySelectorAll(".Tile-module_tile__UWEHN");
 
-        if (tiles.length !== 5) continue;
+        if (TILES.length !== 5) continue;
 
         let guess = "";
 
-        tiles.forEach(tile => {
+        TILES.forEach(tile => {
             guess += tile.textContent;
         });
 
-        if (guess.length === 5 && tiles[0].getAttribute("data-state") !== "tbd") {
-            return guess;
+        if (guess.length === 5 && TILES[0].getAttribute("data-state") !== "tbd") {
+            if(TILES[0].parentElement.parentElement.ariaLabel== "Row 6") {
+                console.log("FINAL GUESS");
+                return "FINAL GUESS";
+            } else {
+                return guess;
+            }
         }
     }
 
@@ -77,16 +82,16 @@ function main() {
     console.log("timer");
     const observer = new MutationObserver(() => {
         
-    const words_div = document.querySelector('[class*="Toolbar-module_toolbar__DGjo1"]'); //when you're in the actual game
-    const badge_div = document.querySelector('[class*="lire-badge-detail-container"]'); //when you beat the wordle
-    const admire_button = document.querySelector('[data-testid*="Admire"]'); //when you beat the wordle and load the page back
-    const play_button = document.querySelector('[data-testid*="Play"]'); //when you launch wordle for the first time
+    const WORDS_DIV = document.querySelector('[class*="Toolbar-module_toolbar__DGjo1"]'); //when you're in the actual game
+    const BADGE_DIV = document.querySelector('[class*="lire-badge-detail-container"]'); //when you beat the wordle
+    const ADMIRE_BUTTON = document.querySelector('[data-testid*="Admire"]'); //when you beat the wordle and load the page back
+    const PLAY_BUTTON = document.querySelector('[data-testid*="Play"]'); //when you launch wordle for the first time
 
-    if (words_div) {
+    if (WORDS_DIV) {
         console.log("Found div");
         observer.disconnect();
 
-        editPage(words_div);
+        setTimer(WORDS_DIV);
     }
     else {
         console.log("div not found");
@@ -97,49 +102,66 @@ function main() {
         childList: true,
         subtree: true
     });
+
+    window.addEventListener("beforeunload", () => {
+        console.log("Page is unloading");
+        //saveGame();
+    });
 }
 
-function editPage(div) {
-    const title = document.createElement("h1");
-    title.textContent = "WordleVGC";
-    title.classList.add("text");
+function setTimer(div) {
+    const TITLE = document.createElement("h1");
+    TITLE.textContent = "WordleVGC";
+    TITLE.classList.add("text");
 
-    const timer = document.createElement("h2");
-    timer.textContent = "00:00:00";
-    timer.classList.add("timer");
+    const TIMER = document.createElement("h2");
+    TIMER.textContent = "00:00:00";
+    TIMER.classList.add("timer");
 
-    const wordle_vgc_div = document.createElement("div");
-    wordle_vgc_div.append(title);
-    wordle_vgc_div.append(timer);
-    wordle_vgc_div.style.alignContent = "center";
+    const WORDLE_VGC_DIV = document.createElement("div");
+    WORDLE_VGC_DIV.append(TITLE);
+    WORDLE_VGC_DIV.append(TIMER);
+    WORDLE_VGC_DIV.style.alignContent = "center";
 
     const firstChild = div.firstElementChild;
-    div.insertBefore(wordle_vgc_div, firstChild.nextSibling);
+    div.insertBefore(WORDLE_VGC_DIV, firstChild.nextSibling);
 
-    checkAnswer(timer);
+    checkAnswerObserver(TIMER);
 }
 
-async function checkAnswer(timer_element) {
+async function checkAnswerObserver(timerElement) {
      //start observing tiles for answer checking
     const { times = {} } = await chrome.storage.local.get("times");
     const todayTime = times[current_date];
+    var guessCount = 0;
+    var lastGuess = "";
     console.log("tester: " + todayTime);
     
     if(todayTime != null) { //if user has completed today already, load their old time
-        adjustTimer(timer_element, todayTime);
+        adjustTimer(timerElement, todayTime);
         return;
     } //otherwise, start timer
 
-    const tiles = document.querySelectorAll("[data-testid='tile']");
+    const tiles = document.querySelectorAll("[data-testid='tile']"); //tracks each individual tile so i can construct the word from all the letters
     const observer = new MutationObserver(() => {
-        if(!timer_started) {
-            timer_interval = startTimer(timer_element);
+        if(!timerStarted) {
+            timerInterval = startTimer(timerElement);
         }
         const guess = getCurrentGuess();
         console.log("Current guess:", guess);
 
-        if (guess === wordle_answer) {
-            foundWordle();
+        if (guess == wordle_answer) {
+            saveGame();
+        }
+        else if(guess == "FINAL GUESS") {
+            console.log("Player failed");
+            saveGame(false);
+            adjustTimer(timerElement, -1);
+        }
+        if(guessCount >= 6) {
+            console.log("Final Guess made.");
+
+            clearInterval(timerInterval);
         }
     });
 
@@ -152,25 +174,31 @@ async function checkAnswer(timer_element) {
     });
 }
 
-async function foundWordle() {
-    clearInterval(timer_interval);
+async function saveGame(success=true) {
+    clearInterval(timerInterval);
 
     const { times = {} } = await chrome.storage.local.get("times");
-    times[current_date] = completion_time;
+
+    if(success==false) {
+        times[current_date] = -completion_time;
+    } else {
+        times[current_date] = completion_time;
+    }
     await chrome.storage.local.set({ times });
+   
 }
 
 
 function startTimer(timer_element) {
-    timer_started = true;
-    const start = Date.now();
+    timerStarted = true;
+    const START = Date.now();
 
-    const timer_interval = setInterval(() => {
-        const now = Date.now();
-        const elapsed = now - start;
+    var timerInterval = setInterval(() => {
+        var now = Date.now();
+        var elapsed = now - START;
 
         if (elapsed >= 3600000) {  //60 minutes
-            clearInterval(timer_interval);
+            clearInterval(timerInterval);
         }
         else {
             adjustTimer(timer_element, elapsed);
@@ -179,18 +207,27 @@ function startTimer(timer_element) {
 
     }, 10);
 
-    return timer_interval;
+    return timerInterval;
 }
 
 function adjustTimer(timer_element, time) {
-        const minutes = Math.floor(time / 60000);
-        const seconds = Math.floor((time % 60000) / 1000);
-        const milliseconds = time % 1000;
+    var DNF = false;
+    if(time < 0) { //convert DNFs back to readable times
+        time = -time;
+        DNF = true;
+    }
 
-        const msStr = String(Math.floor(milliseconds / 10)).padStart(2, '0');
-        const secStr = String(seconds).padStart(2, '0');
-        const minStr = String(minutes).padStart(2, '0');
+    var minutes = Math.floor(time / 60000);
+    var seconds = Math.floor((time % 60000) / 1000);
+    var milliseconds = time % 1000;
 
-        timer_element.innerHTML = `${minStr}:${secStr}:${msStr}`;
+    var msStr = String(Math.floor(milliseconds / 10)).padStart(2, '0');
+    var secStr = String(seconds).padStart(2, '0');
+    var minStr = String(minutes).padStart(2, '0');
+
+    timer_element.innerHTML = `${minStr}:${secStr}:${msStr}`;
+    if(DNF) {timer_element.style.color = "red";}
+    else {timer_element.style.color = "green";}
 }
+//chrome.storage.local.clear();
 init();

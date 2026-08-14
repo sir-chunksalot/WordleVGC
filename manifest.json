@@ -1,7 +1,7 @@
 {
   "name": "WordleVGC",
-  "description": "Competitive Wordle",
-  "version": "1.0",
+  "description": "Adds a timer to Wordle",
+  "version": "1.1",
   "manifest_version": 3,
   "action": {
     "default_popup": "./popup/popup.html",
@@ -16,21 +16,10 @@
       ]
     }
   ],
-  "web_accessible_resources": [
-    {
-      "resources": ["scripts/inject.js"],
-      "matches": [
-        "https://www.nytimes.com/*"
-      ]
-    }
-  ],
   "externally_connectable": {
     "matches": ["*://*.nytimes.com/*"]
   },
   "permissions": [
-    "scripting",
-    "storage",
-    "activeTab",
     "storage"
   ]
 }
